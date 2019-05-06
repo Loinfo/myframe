@@ -5,13 +5,15 @@ import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.handlers.BeanHandler;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
-import org.cilion.myframe.model.Customer;
-import org.cilion.myframe.service.CustomerService;
 import org.cilion.myframe.util.CollectionUtil;
 import org.cilion.myframe.util.PropsUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -44,7 +46,7 @@ public class DatabaseHelper {
         DATA_SOURCE = new BasicDataSource();
         DATA_SOURCE.setDriverClassName(driver);
         DATA_SOURCE.setUrl(url);
-        DATA_SOURCE.setUrl(username);
+        DATA_SOURCE.setUsername(username);
         DATA_SOURCE.setPassword(password);
 
     }
@@ -188,6 +190,21 @@ public class DatabaseHelper {
     public static <T> boolean deleteEntity(Class<T> entityClass, long id){
         String sql = "DELETE FROM " + getTableName(entityClass) + " WHERE id = ?";
         return executeUpdate(sql, id) == 1;
+    }
+
+
+    public static void executeSqlFile(String filePath){
+        InputStream is = Thread.currentThread().getContextClassLoader().getResourceAsStream(filePath);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+        try {
+            String sql;
+            while ((sql=reader.readLine()) != null){
+                executeUpdate(sql);
+            }
+        } catch (IOException e) {
+            logger.error("execute sql file failure", e);
+            throw new RuntimeException(e);
+        }
     }
 
     /**
